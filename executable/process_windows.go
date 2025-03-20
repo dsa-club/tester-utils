@@ -12,7 +12,7 @@ func killProcess(pid int) {
 	}
 	defer syscall.CloseHandle(handle)
 
-	err = syscall.TerminateProcess(handle, 1) // Exit code 1
+	err = syscall.TerminateProcess(handle, 15) // Exit code 1
 	if err != nil {
 		log.Fatalf("Failed to terminate process: %v", err)
 	}

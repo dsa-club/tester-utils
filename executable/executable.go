@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"io"
@@ -123,7 +124,10 @@ func (e *Executable) Start(args ...string) error {
 	}
 
 	// Check executable permission
-	if fileInfo.Mode().Perm()&0111 == 0 || fileInfo.IsDir() {
+	if fileInfo.IsDir() {
+		return fmt.Errorf("%s is not an executable file", e.Path)
+	}
+	if runtime.GOOS != "windows" && fileInfo.Mode().Perm()&0111 == 0 {
 		return fmt.Errorf("%s is not an executable file", e.Path)
 	}
 
@@ -132,6 +136,10 @@ func (e *Executable) Start(args ...string) error {
 	e.ctxCancelFunc = cancel
 
 	cmd := exec.CommandContext(ctx, e.Path, args...)
+	if runtime.GOOS == "windows" {
+		args = append([]string{e.Path}, args...)
+		cmd = exec.CommandContext(ctx, "sh", args...)
+	}
 	cmd.Dir = e.WorkingDir
 	cmd.SysProcAttr = createProcAttribute()
 	e.readDone = make(chan bool)
